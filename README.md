@@ -14,7 +14,7 @@ You can get 2 months token by pressing info "i" icon ^_^
     - ```pages_manage_posts```
     - ```pages_read_engagement```
     - ```pages_read_user_engagement```
-    - ```publish_video``` permission, if you are publishing a video to the Page
+    - ```publish_video``` permission, if you want to publish a video
 
 - Take PAGE_ID from page that you planning to do post.
 
@@ -34,14 +34,14 @@ const PAGE_ID: &str = "YOUR_PAGE_ID";
 
 
 #[tokio::main]
-async fn main() -> Result<()>{
+async fn main() -> Result<()> {
     // Bring your secrets into a scope
     let secrets = Secrets::new(ACCESS_TOKEN, PAGE_ID);
 
     // Build a body for a request
-    let your_message = "Hello World!".to_string();
-    let your_link = "www.internet.net".to_string(); // you can left this field as None 
-    let body = Post::new(&secrets, Some(your_message), Some(your_link)); // if you don't want upload a link
+    let message = "Your message".to_string();
+    let your_link = "www.internet.net".to_string(); // You can left this field as None,
+    let body = Post::new(&secrets, Some(message), Some(your_link)); // if you don't want upload a link
 
     // Sending and get repsonse
     body.send(&secrets).await?;
@@ -50,11 +50,36 @@ async fn main() -> Result<()>{
 }
 ```
 
+### Photo
 
-## Features
+```rust
+use fb_poster::*;
+use anyhow::{Ok, Result};
+
+const ACCESS_TOKEN: &str = "YOUR_ACCESS_TOKEN";
+const PAGE_ID: &str = "YOUR_PAGE_ID";
+
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    // Bring your secrets into a scope
+    let secrets = Secrets::new(ACCESS_TOKEN, PAGE_ID);
+
+    // Build a body for a request
+    let path = "/path/to/photo.png".to_string();
+    let body = Video::new(&secrets, path);
+
+    // Sending and get repsonse
+    body.send(&secrets).await?;
+
+    Ok(())
+}
+```
+
+## ✅ Features
 
 - [x] Post
-- [ ] Photo
+- [x] Photo
 - [ ] Video
 - [ ] Live Video
 

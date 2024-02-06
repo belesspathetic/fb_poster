@@ -1,8 +1,11 @@
 #![allow(dead_code)]
-use anyhow::{anyhow, Ok, Result};
-use reqwest::{header::CONTENT_TYPE, Client, Response};
+use anyhow::{Ok, Result};
+use reqwest::{header::CONTENT_TYPE, multipart, Client};
 use serde::Serialize;
-mod tests;
+
+mod utils;
+use utils::{get_response, collect_file};
+
 
 pub struct Secrets {
     access_token: String,
@@ -51,12 +54,40 @@ impl Post {
     }
 }
 
-pub async fn get_response(resp: Response) -> Result<()> {
-    if !resp.status().is_success() {
-        return Err(anyhow!("ERROR: server response is {}", resp.text().await?));
-    } else {
-        println!("SUCCESS: {}", resp.text().await?)
-    };
-    Ok(())
+pub struct Photo {
+    access_token: String,
+    path: String,
 }
 
+impl Photo {
+    pub fn new(secrets: &Secrets, path: String) -> Self {
+        Self {
+            access_token: secrets.access_token.clone(),
+            path: path,
+        }
+    }
+
+    pub async fn send(&self, secrets: Secrets) -> Result<()> {
+        println!("PROCESS: opening your file...");
+        let buffer = collect_file(&self.path);
+        println!("SUCCESS: file set");
+        println!("PROCESS: sending your reqwest...");
+        let url = format!(
+            "https://graph.facebook.com/v19.0/{}/photos",
+            secrets.page_id
+        );
+
+        let cl = Client::new();
+
+        let part = multipart::Part::bytes(buffer).file_name("test.png");
+        let reqbody = multipart::Form::new()
+            .text("access_token", secrets.access_token.clone())
+            .part("source", part);
+
+        let resp = cl.post(url).multipart(reqbody).send().await?;
+
+        get_response(resp).await?;
+
+        Ok(())
+    }
+}

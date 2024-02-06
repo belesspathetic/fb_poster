@@ -13,3 +13,13 @@ async fn send_post() -> anyhow::Result<()> {
     Ok(())
 }
 
+#[tokio::test]
+
+async fn send_photo() -> Result<()> {
+    let secret = Secrets::new(TEST_ACCESS_TOKEN, TEST_PAGE_ID);
+    let path = r"test.png".to_string();
+    let body = Photo::new(&secret, path);
+
+    body.send(secret).await?;
+    Ok(())
+}
