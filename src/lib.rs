@@ -35,6 +35,7 @@ impl Post {
     }
 
     pub async fn send(&self, secrets: &Secrets) -> Result<()> {
+        println!("PROCESS: sending your reqwest...");
         let url = format!("https://graph.facebook.com/v19.0/{}/feed", secrets.page_id);
         let cl = Client::new();
         let resp = cl
