@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 use anyhow::{anyhow, Ok, Result};
 use reqwest::{header::CONTENT_TYPE, Client, Response};
-use serde::{Serialize};
+use serde::Serialize;
 mod tests;
 
 struct Secrets {
