@@ -1,6 +1,6 @@
 [package]
 name = "fb_poster"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["Atrem Zavadskiy haramzayka@gmail.com"]
 edition = "2021"
 
