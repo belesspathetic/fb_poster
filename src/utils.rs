@@ -1,6 +1,6 @@
-use std::{fs::File, io::Read};
+use anyhow::{anyhow, Ok, Result};
 use reqwest::Response;
-use anyhow::{anyhow, Result, Ok};
+use std::{fs::File, io::Read, path::Path};
 
 pub async fn get_response(resp: Response) -> Result<()> {
     if !resp.status().is_success() {
@@ -17,4 +17,29 @@ pub fn collect_file(path: &String) -> Vec<u8> {
     file.read_to_end(&mut buffer).expect("cant read file");
 
     buffer
+}
+
+pub fn get_file_name(path: &String) -> String {
+    let name = Path::new(&path)
+        .file_name()
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_string();
+
+    name
+}
+
+pub struct Secrets {
+    pub access_token: String,
+    pub page_id: String,
+}
+
+impl Secrets {
+    pub fn new(access_token: &str, page_id: &str) -> Self {
+        Self {
+            access_token: access_token.to_string(),
+            page_id: page_id.to_string(),
+        }
+    }
 }
