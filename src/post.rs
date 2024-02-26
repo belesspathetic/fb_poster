@@ -1,12 +1,13 @@
+#![allow(dead_code)]
 use crate::utils::{get_response, Secrets};
 
 use anyhow::{Ok, Result};
 use reqwest::{multipart, Client};
 
 pub struct Post {
-    secrets: Secrets,
-    message: Option<String>,
-    link: Option<String>,
+    pub secrets: Secrets,
+    pub message: Option<String>,
+    pub link: Option<String>,
 }
 
 impl Post {

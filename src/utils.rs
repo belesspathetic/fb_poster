@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use anyhow::{anyhow, Ok, Result};
 use reqwest::Response;
 use std::{fs::File, io::Read, path::Path};

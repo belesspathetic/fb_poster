@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 const TEST_ACCESS_TOKEN: &str = "";
 const TEST_PAGE_ID: &str = "";
 

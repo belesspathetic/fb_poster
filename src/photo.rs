@@ -1,11 +1,12 @@
+#![allow(dead_code)]
 use crate::utils::{collect_file, get_file_name, get_response, Secrets};
 
 use anyhow::{Ok, Result};
 use reqwest::{multipart, Client};
 
 pub struct Photo {
-    secrets: Secrets,
-    path: String,
+    pub secrets: Secrets,
+    pub path: String,
 }
 
 impl Photo {

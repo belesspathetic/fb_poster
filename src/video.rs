@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use crate::utils::{collect_file, get_file_name, get_response, Secrets};
 
 use anyhow::{Ok, Result};
