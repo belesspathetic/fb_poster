@@ -4,6 +4,7 @@ use crate::utils::{collect_file, get_file_size, get_response, Secrets};
 use anyhow::{Ok, Result};
 use reqwest::{header::AUTHORIZATION, multipart, Client};
 use serde_json::{json, Value};
+use log::debug;
 
 pub struct Reels {
     pub secrets: Secrets,
@@ -64,7 +65,7 @@ impl Reels {
 
         let resp_string = resp.text().await?;
 
-        println!("{}", resp_string);
+        debug!("{}", resp_string);
 
         let (video_id, upload_url) = Reels::parse_from_json(resp_string.to_string());
 
@@ -84,7 +85,7 @@ impl Reels {
         );
 
         if let Some(path) = &self.path {
-            println!("PROCESS: uploading...");
+            debug!("PROCESS: uploading...");
             let buffer = collect_file(path);
             let size = get_file_size(path).expect("cant open a file");
 
@@ -104,7 +105,7 @@ impl Reels {
         }
 
         if let Some(url) = &self.url {
-            println!("PROCESS: uploading...");
+            debug!("PROCESS: uploading...");
             let resp = session
                 .cl
                 .post(&endpoint)
@@ -147,7 +148,7 @@ impl Reels {
         Self::reel_upload(&self, &session).await?;
 
         Self::publish(&self, &session).await?;
-        println!("SUCCESS: Video published");
+        debug!("SUCCESS: Video published");
         Ok(())
     }
 

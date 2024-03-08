@@ -3,6 +3,7 @@ use crate::utils::{get_response, Secrets};
 
 use anyhow::{Ok, Result};
 use reqwest::{multipart, Client};
+use log::debug;
 
 pub struct Post {
     pub secrets: Secrets,
@@ -30,7 +31,7 @@ impl Post {
     }
 
     pub async fn send(&self) -> Result<()> {
-        println!("PROCESS: sending reqwest...");
+        debug!("PROCESS: sending reqwest...");
         let url = format!(
             "https://graph.facebook.com/v19.0/{}/feed",
             self.secrets.page_id
@@ -41,13 +42,13 @@ impl Post {
             multipart::Form::new().text("access_token", self.secrets.access_token.to_owned());
 
         if let Some(msg) = &self.message {
-            println!("PROCESS: adding message");
+            debug!("PROCESS: adding message");
 
             reqbody = reqbody.text("message", msg.to_owned());
         }
 
         if let Some(link) = &self.link {
-            println!("PROCESS: adding link");
+            debug!("PROCESS: adding link");
 
             reqbody = reqbody.text("link", link.to_owned());
         }

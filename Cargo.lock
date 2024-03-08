@@ -141,6 +141,7 @@ name = "fb_poster"
 version = "0.1.7"
 dependencies = [
  "anyhow",
+ "log",
  "reqwest",
  "serde_json",
  "tokio",
