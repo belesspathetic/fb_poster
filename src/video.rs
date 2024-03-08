@@ -3,6 +3,7 @@ use crate::utils::{collect_file, get_file_name, get_response, Secrets};
 
 use anyhow::{Ok, Result};
 use reqwest::{multipart, Client};
+use log::debug;
 
 pub struct Video {
     pub secrets: Secrets,
@@ -60,7 +61,7 @@ impl Video {
             multipart::Form::new().text("access_token", self.secrets.access_token.to_owned());
 
         if let Some(path) = &self.path {
-            println!("PROCESS: adding local video...");
+            debug!("PROCESS: adding local video...");
             let buffer = collect_file(path);
             let name = get_file_name(path);
             let part = multipart::Part::bytes(buffer).file_name(name);
@@ -69,25 +70,25 @@ impl Video {
         }
 
         if let Some(url) = &self.url {
-            println!("PROCESS: adding hosted video...");
+            debug!("PROCESS: adding hosted video...");
 
             reqbody = reqbody.text("file_url", url.to_owned());
         }
 
         if let Some(title) = &self.title {
-            println!("PROCESS: adding title...");
+            debug!("PROCESS: adding title...");
 
             reqbody = reqbody.text("title", title.to_owned());
         }
 
         if let Some(description) = &self.description {
-            println!("PROCESS: adding description...");
+            debug!("PROCESS: adding description...");
 
             reqbody = reqbody.text("description", description.to_owned());
         }
 
         if let Some(thumb) = &self.thumb {
-            println!("PROCESS: adding thumbnail...");
+            debug!("PROCESS: adding thumbnail...");
             let buffer = collect_file(thumb);
             let name = get_file_name(thumb);
             let part = multipart::Part::bytes(buffer).file_name(name);
@@ -95,7 +96,7 @@ impl Video {
             reqbody = reqbody.part("thumb", part);
         }
 
-        println!("PROCESS: sending reqwest...");
+        debug!("PROCESS: sending reqwest...");
 
         let resp = cl.post(url).multipart(reqbody).send().await?;
         get_response(resp).await?;

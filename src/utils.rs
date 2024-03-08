@@ -6,12 +6,13 @@ use std::{
     io::Read,
     path::Path,
 };
+use log::debug;
 
 pub async fn get_response(resp: Response) -> Result<()> {
     if !resp.status().is_success() {
         return Err(anyhow!("ERROR: server response is {}", resp.text().await?));
     } else {
-        println!("SUCCESS: {}", resp.text().await?)
+        debug!("SUCCESS: {}", resp.text().await?)
     };
     Ok(())
 }

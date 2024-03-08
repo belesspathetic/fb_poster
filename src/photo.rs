@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 use crate::utils::{collect_file, get_file_name, get_response, Secrets};
 
+use log::debug;
 use anyhow::{Ok, Result};
 use reqwest::{multipart, Client};
 
@@ -20,10 +21,10 @@ impl Photo {
     }
 
     pub async fn send(&self) -> Result<()> {
-        println!("PROCESS: opening photo...");
+        debug!("PROCESS: opening photo...");
         let buffer = collect_file(&self.path);
-        println!("SUCCESS: file set");
-        println!("PROCESS: sending reqwest...");
+        debug!("SUCCESS: file set");
+        debug!("PROCESS: sending reqwest...");
         let url = format!(
             "https://graph.facebook.com/v19.0/{}/photos",
             self.secrets.page_id
@@ -37,7 +38,7 @@ impl Photo {
             .part("source", part);
 
         if let Some(msg) = &self.text {
-            println!("PROCESS: adding message");
+            debug!("PROCESS: adding message");
 
             reqbody = reqbody.text("message", msg.to_owned());
         }
