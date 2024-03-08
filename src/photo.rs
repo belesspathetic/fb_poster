@@ -7,6 +7,7 @@ use reqwest::{multipart, Client};
 pub struct Photo {
     pub secrets: Secrets,
     pub path: String,
+    pub text: Option<String>,
 }
 
 impl Photo {
@@ -14,6 +15,7 @@ impl Photo {
         Self {
             secrets: secrets,
             path: path,
+            text: None,
         }
     }
 
@@ -30,14 +32,25 @@ impl Photo {
         let cl = Client::new();
         let name = get_file_name(&self.path);
         let part = multipart::Part::bytes(buffer).file_name(name);
-        let reqbody = multipart::Form::new()
+        let mut reqbody = multipart::Form::new()
             .text("access_token", self.secrets.access_token.to_owned())
             .part("source", part);
+
+        if let Some(msg) = &self.text {
+            println!("PROCESS: adding message");
+
+            reqbody = reqbody.text("message", msg.to_owned());
+        }
 
         let resp = cl.post(url).multipart(reqbody).send().await?;
 
         get_response(resp).await?;
 
         Ok(())
+    }
+
+    pub fn with_message(mut self, message: String) -> Self {
+        self.text = Some(message);
+        self
     }
 }

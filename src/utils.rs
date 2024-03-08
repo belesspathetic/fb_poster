@@ -1,7 +1,11 @@
 #![allow(dead_code)]
 use anyhow::{anyhow, Ok, Result};
 use reqwest::Response;
-use std::{fs::File, io::Read, path::Path};
+use std::{
+    fs::{metadata, File},
+    io::Read,
+    path::Path,
+};
 
 pub async fn get_response(resp: Response) -> Result<()> {
     if !resp.status().is_success() {
@@ -29,6 +33,12 @@ pub fn get_file_name(path: &String) -> String {
         .to_string();
 
     name
+}
+
+pub fn get_file_size(path: &String) -> Result<u64> {
+    let metadata = metadata(path)?;
+    let file_size = metadata.len();
+    Ok(file_size)
 }
 
 pub struct Secrets {

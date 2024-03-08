@@ -117,12 +117,46 @@ async fn main() -> Result<()> {
 }
 ```
 
+### Reels
+
+```rust
+use fb_poster::*;
+use anyhow::{Ok, Result};
+
+const ACCESS_TOKEN: &str = "YOUR_ACCESS_TOKEN";
+const PAGE_ID: &str = "YOUR_PAGE_ID";
+
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    // Bring your secrets into a scope
+    let secrets = Secrets::new(ACCESS_TOKEN, PAGE_ID);
+
+
+    let path = "/path/to/video".to_string(); // or url for .hosted_video()
+    let title = "Title".to_string();
+    let description = "Description".to_string();
+    let thumb = "path/to/thumb".to_string();
+
+    // Build a body for a request
+    let body = Reels::new(secrets)
+    .local_video(path)
+    .with_description(description)
+
+    // Sending and get repsonse
+    body.send().await?;
+
+    Ok(())
+}
+```
+
 ## ✅ Features
 
 - [x] Post
   - [x] With Message
   - [x] With Link
 - [x] Photo
+  - [x] With Message
 
 **Non-Resumable Upload (Video limitation is 1GB 20min)**
 
@@ -132,4 +166,9 @@ async fn main() -> Result<()> {
   - [x] With Title
   - [x] With Description
   - [x] With Thumbnail
+
+- [x] Reels
+  - [x] Local Reels
+  - [x] Hosted Reels
+  - [x] With Description
 

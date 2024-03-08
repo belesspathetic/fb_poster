@@ -1,5 +1,5 @@
-mod photo;
-mod post;
-mod tests;
-mod utils;
-mod video;
+pub mod photo;
+pub mod post;
+pub mod reels;
+pub mod utils;
+pub mod video;
