@@ -1,3 +1,3 @@
 #![allow(dead_code)]
-pub const TEST_ACCESS_TOKEN: &str = "EAAOqY2sZBZAc4BO198kbzjZAdbinpZAiOGRj9ZBovlJEui75h3eEjGB1e3SYcutq7n0gncJ7midUxlsww78j65SsmDsnOjrWVGZCAupDiZBL3hBPEh0JAXif7VCuc2PsEGODVBCaeobc0gGkNA9oBR7MjDOwwcTygu12GXBl9B6VbaWOZCUANLHIAqpQrZCtYzrBbk2VR646nyLR7qc828eDvkCQZD";
-pub const TEST_PAGE_ID: &str = "128699823665014";
+pub const TEST_ACCESS_TOKEN: &str = "";
+pub const TEST_PAGE_ID: &str = "";
