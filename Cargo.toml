@@ -17,4 +17,4 @@ anyhow = "1.0.79"
 reqwest = { version = "0.12.2", features = ["multipart"] }
 serde_json = "1.0.114"
 tokio = { version = "1.36.0", features = ["full"] }
-log = "*"
+log = "0.4.21"
