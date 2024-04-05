@@ -42,6 +42,7 @@ pub fn get_file_size(path: &String) -> Result<u64> {
     Ok(file_size)
 }
 
+#[derive(Clone)]
 pub struct Secrets {
     pub access_token: String,
     pub page_id: String,
