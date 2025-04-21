@@ -2,9 +2,9 @@
 use crate::utils::{collect_file, get_file_size, get_response, Secrets};
 
 use anyhow::{Ok, Result};
+use log::debug;
 use reqwest::{header::AUTHORIZATION, multipart, Client};
 use serde_json::{json, Value};
-use log::debug;
 
 pub struct Reels {
     pub secrets: Secrets,

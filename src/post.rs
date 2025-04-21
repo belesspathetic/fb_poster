@@ -1,14 +1,18 @@
 #![allow(dead_code)]
-use crate::utils::{get_response, Secrets};
+use std::fs;
+
+use crate::
+    utils::{collect_file, get_file_name, get_response, Secrets};
 
 use anyhow::{Ok, Result};
-use reqwest::{multipart, Client};
 use log::debug;
+use reqwest::{multipart, Client};
 
 pub struct Post {
     pub secrets: Secrets,
     pub message: Option<String>,
     pub link: Option<String>,
+    pub url: Option<String>,
 }
 
 impl Post {
@@ -17,6 +21,7 @@ impl Post {
             secrets: secrets,
             message: None,
             link: None,
+            url: None,
         }
     }
 
@@ -30,9 +35,14 @@ impl Post {
         self
     }
 
+    pub fn with_photo(mut self, url: String) -> Self {
+        self.url = Some(url);
+        self
+    }
+
     pub async fn send(&self) -> Result<()> {
         debug!("PROCESS: sending reqwest...");
-        let url = format!(
+        let endpoint = format!(
             "https://graph.facebook.com/v19.0/{}/feed",
             self.secrets.page_id
         );
@@ -53,7 +63,14 @@ impl Post {
             reqbody = reqbody.text("link", link.to_owned());
         }
 
-        let resp = cl.post(url).multipart(reqbody).send().await?;
+
+        if let Some(url) = &self.url {
+            reqbody = reqbody.text("source", url.clone());
+        }
+
+        let resp = cl.post(endpoint).multipart(reqbody).send().await?;
+
+        debug!("{:?}", resp);
 
         get_response(resp).await?;
 

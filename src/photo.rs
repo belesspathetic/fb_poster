@@ -1,14 +1,16 @@
 #![allow(dead_code)]
-use crate::utils::{collect_file, get_file_name, get_response, Secrets};
+use crate::utils::{collect_file, get_file_name, Secrets};
 
-use log::debug;
 use anyhow::{Ok, Result};
+use log::debug;
 use reqwest::{multipart, Client};
 
 pub struct Photo {
     pub secrets: Secrets,
     pub path: String,
     pub text: Option<String>,
+    pub published: Option<bool>,
+    pub media_id: Option<String>,
 }
 
 impl Photo {
@@ -17,10 +19,12 @@ impl Photo {
             secrets: secrets,
             path: path,
             text: None,
+            published: None,
+            media_id: None,
         }
     }
 
-    pub async fn send(&self) -> Result<()> {
+    pub async fn send(mut self) -> Result<Self> {
         debug!("PROCESS: opening photo...");
         let buffer = collect_file(&self.path);
         debug!("SUCCESS: file set");
@@ -43,15 +47,29 @@ impl Photo {
             reqbody = reqbody.text("message", msg.to_owned());
         }
 
+        let publish_flag = self.published.unwrap_or(true);
+        reqbody = reqbody.text("published", publish_flag.to_string());
+
         let resp = cl.post(url).multipart(reqbody).send().await?;
 
-        get_response(resp).await?;
+        let json: serde_json::Value = resp.json().await?;
+        debug!("PHOTO RESPONSE: {:?}", json);
 
-        Ok(())
+        if let Some(id) = json.get("id") {
+            self.media_id = Some(id.as_str().unwrap_or_default().to_string());
+            Ok(self)
+        } else {
+            Err(anyhow::anyhow!("No photo ID"))
+        }
     }
 
     pub fn with_message(mut self, message: String) -> Self {
         self.text = Some(message);
+        self
+    }
+
+    pub fn published(mut self, value: bool) -> Self {
+        self.published = Some(value);
         self
     }
 }

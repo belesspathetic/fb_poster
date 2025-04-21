@@ -2,8 +2,8 @@
 use crate::utils::{collect_file, get_file_name, get_response, Secrets};
 
 use anyhow::{Ok, Result};
-use reqwest::{multipart, Client};
 use log::debug;
+use reqwest::{multipart, Client};
 
 pub struct Video {
     pub secrets: Secrets,
