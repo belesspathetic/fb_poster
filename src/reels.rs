@@ -1,16 +1,16 @@
-#![allow(dead_code)]
 use crate::utils::{collect_file, get_file_size, get_response, Secrets};
 
-use anyhow::{Ok, Result};
-use log::debug;
+use anyhow::{anyhow, Context, Result};
+use log::{debug, info};
 use reqwest::{header::AUTHORIZATION, multipart, Client};
-use serde_json::{json, Value};
+use serde_json::json;
 
 pub struct Reels {
     pub secrets: Secrets,
     pub path: Option<String>,
     pub url: Option<String>,
     pub description: Option<String>,
+    pub thumbnail: Option<String>,
 }
 
 struct Session {
@@ -22,10 +22,11 @@ struct Session {
 impl Reels {
     pub fn new(secrets: Secrets) -> Self {
         Self {
-            secrets: secrets,
+            secrets,
             path: None,
             url: None,
             description: None,
+            thumbnail: None,
         }
     }
 
@@ -44,11 +45,19 @@ impl Reels {
         self
     }
 
+    pub fn with_thumbnail(mut self, path: String) -> Self {
+        self.thumbnail = Some(path);
+        self
+    }
+
     async fn initial_session(&self) -> Result<Session> {
+        info!("STEP 1: Start upload session");
+
         let endpoint = format!(
-            "https://graph.facebook.com/v19.0/{}/video_reels",
+            "https://graph.facebook.com/v25.0/{}/video_reels",
             self.secrets.page_id
         );
+
         let cl = Client::new();
 
         let data = json!({
@@ -56,108 +65,138 @@ impl Reels {
             "access_token": self.secrets.access_token
         });
 
-        let resp = cl
-            .post(endpoint)
-            .header("Content-Type", "application/json")
-            .body(data.to_string())
-            .send()
-            .await?;
+        let resp = cl.post(&endpoint).json(&data).send().await?;
 
-        let resp_string = resp.text().await?;
+        let json = get_response(resp).await?;
 
-        debug!("{}", resp_string);
+        let video_id = json["video_id"]
+            .as_str()
+            .ok_or_else(|| anyhow!("missing video_id"))?
+            .to_string();
 
-        let (video_id, upload_url) = Reels::parse_from_json(resp_string.to_string());
+        let upload_url = json["upload_url"]
+            .as_str()
+            .ok_or_else(|| anyhow!("missing upload_url"))?
+            .to_string();
 
-        let session = Session {
-            video_id: video_id,
-            upload_url: upload_url,
-            cl: cl,
-        };
+        info!("Session created: video_id={}", video_id);
 
-        Ok(session)
+        Ok(Session {
+            video_id,
+            upload_url,
+            cl,
+        })
     }
 
     async fn reel_upload(&self, session: &Session) -> Result<()> {
-        let endpoint = format!(
-            "https://rupload.facebook.com/video-upload/v19.0/{}",
-            session.video_id
-        );
+        info!("STEP 2: Upload video");
+
+        let endpoint = &session.upload_url;
 
         if let Some(path) = &self.path {
-            debug!("PROCESS: uploading...");
-            let buffer = collect_file(path);
-            let size = get_file_size(path).expect("cant open a file");
+            debug!("Uploading local file: {}", path);
+
+            let buffer = collect_file(path)
+                .with_context(|| format!("failed to read file {}", path))?;
+
+            let size = get_file_size(path)?;
 
             let resp = session
                 .cl
-                .post(&endpoint)
-                .header(
-                    AUTHORIZATION,
-                    format!("OAuth {}", self.secrets.access_token),
-                )
-                .header("offset", "0".to_string())
-                .header("file_size", size.to_string())
+                .post(endpoint)
+                .header(AUTHORIZATION, format!("OAuth {}", self.secrets.access_token))
+                .header("offset", "0")
+                .header("file_size", size)
                 .body(buffer)
                 .send()
                 .await?;
+
             get_response(resp).await?;
         }
 
         if let Some(url) = &self.url {
-            debug!("PROCESS: uploading...");
+            debug!("Uploading from URL: {}", url);
+
             let resp = session
                 .cl
-                .post(&endpoint)
-                .header(
-                    AUTHORIZATION,
-                    format!("OAuth {}", self.secrets.access_token),
-                )
+                .post(endpoint)
+                .header(AUTHORIZATION, format!("OAuth {}", self.secrets.access_token))
                 .header("file_url", url)
                 .send()
                 .await?;
+
             get_response(resp).await?;
         }
+
+        Ok(())
+    }
+
+    async fn upload_thumbnail(&self, session: &Session) -> Result<()> {
+        if self.thumbnail.is_none() {
+            return Ok(());
+        }
+
+        info!("STEP 3: Upload thumbnail");
+
+        let path = self.thumbnail.as_ref().unwrap();
+
+        let endpoint = format!(
+            "https://graph.facebook.com/v25.0/{}/thumbnails",
+            session.video_id
+        );
+
+        let form = multipart::Form::new()
+            .text("access_token", self.secrets.access_token.clone())
+            .text("is_preferred", "true")
+            .part(
+                "source",
+                multipart::Part::bytes(collect_file(path)?)
+                    .file_name("thumbnail.jpg"),
+            );
+
+        let resp = session.cl.post(endpoint).multipart(form).send().await?;
+
+        get_response(resp).await?;
+
         Ok(())
     }
 
     async fn publish(&self, session: &Session) -> Result<()> {
+        info!("STEP 4: Publish video");
+
         let endpoint = format!(
-            "https://graph.facebook.com/v19.0/{}/video_reels",
+            "https://graph.facebook.com/v25.0/{}/video_reels",
             self.secrets.page_id
         );
 
         let mut reqbody = multipart::Form::new()
-            .text("access_token", self.secrets.access_token.to_owned())
-            .text("video_id", session.video_id.to_owned())
+            .text("access_token", self.secrets.access_token.clone())
+            .text("video_id", session.video_id.clone())
             .text("upload_phase", "finish")
             .text("video_state", "PUBLISHED");
 
         if let Some(desc) = &self.description {
-            reqbody = reqbody.text("description", desc.to_owned());
+            reqbody = reqbody.text("description", desc.clone());
         }
 
         let resp = session.cl.post(endpoint).multipart(reqbody).send().await?;
+
         get_response(resp).await?;
+
         Ok(())
     }
 
     pub async fn send(self) -> Result<()> {
-        let session = Self::initial_session(&self).await?;
+        let session = self.initial_session().await?;
 
-        Self::reel_upload(&self, &session).await?;
+        self.reel_upload(&session).await?;
 
-        Self::publish(&self, &session).await?;
-        debug!("SUCCESS: Video published");
+        self.upload_thumbnail(&session).await?;
+
+        self.publish(&session).await?;
+
+        info!("SUCCESS: Video fully published");
+
         Ok(())
-    }
-
-    fn parse_from_json(resp: String) -> (String, String) {
-        let parsed: Value = serde_json::from_str(&resp).expect("cant parse json");
-
-        let video_id = parsed["video_id"].as_str().unwrap().to_string();
-        let upload_url = parsed["upload_url"].as_str().unwrap().to_string();
-
-        (video_id, upload_url)
     }
 }

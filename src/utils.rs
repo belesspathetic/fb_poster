@@ -1,44 +1,39 @@
-#![allow(dead_code)]
-use anyhow::{anyhow, Ok, Result};
+use anyhow::{anyhow, Result};
+use log::{debug, error};
 use reqwest::Response;
+use serde_json::Value;
 use std::{
     fs::{metadata, File},
     io::Read,
     path::Path,
 };
 
-pub async fn get_response(resp: Response) -> Result<()> {
-    if !resp.status().is_success() {
-        return Err(anyhow!("ERROR: server response is {}", resp.text().await?));
-    } else {
-        println!("SUCCESS: {}", resp.text().await?)
-    };
-    Ok(())
+pub async fn get_response(resp: Response) -> Result<Value> {
+    let status = resp.status();
+    let text = resp.text().await?;
+
+    debug!("RESPONSE: {}", text);
+
+    if !status.is_success() {
+        error!("HTTP ERROR {}: {}", status, text);
+        return Err(anyhow!("server error: {}", text));
+    }
+
+    let json: Value = serde_json::from_str(&text)
+        .map_err(|_| anyhow!("invalid json response: {}", text))?;
+
+    Ok(json)
 }
 
-pub fn collect_file(path: &String) -> Vec<u8> {
+pub fn collect_file(path: &String) -> Result<Vec<u8>> {
     let mut buffer = Vec::new();
-    let mut file = File::open(path).expect("cant open file");
-    file.read_to_end(&mut buffer).expect("cant read file");
-
-    buffer
-}
-
-pub fn get_file_name(path: &String) -> String {
-    let name = Path::new(&path)
-        .file_name()
-        .unwrap()
-        .to_str()
-        .unwrap()
-        .to_string();
-
-    name
+    let mut file = File::open(path)?;
+    file.read_to_end(&mut buffer)?;
+    Ok(buffer)
 }
 
 pub fn get_file_size(path: &String) -> Result<u64> {
-    let metadata = metadata(path)?;
-    let file_size = metadata.len();
-    Ok(file_size)
+    Ok(metadata(path)?.len())
 }
 
 #[derive(Clone)]
@@ -54,4 +49,14 @@ impl Secrets {
             page_id: page_id.to_string(),
         }
     }
+}
+pub fn get_file_name(path: &String) -> String {
+    let name = Path::new(&path)
+        .file_name()
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_string();
+
+    name
 }

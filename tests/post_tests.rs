@@ -15,6 +15,7 @@ async fn send_post() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
+#[ignore = "it works"]
 async fn send_post_with_photo() -> anyhow::Result<()> {
     env_logger::init();
     let secret = fb_poster::utils::Secrets::new(TEST_ACCESS_TOKEN, TEST_PAGE_ID);

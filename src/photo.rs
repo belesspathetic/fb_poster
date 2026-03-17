@@ -26,7 +26,7 @@ impl Photo {
 
     pub async fn send(mut self) -> Result<Self> {
         debug!("PROCESS: opening photo...");
-        let buffer = collect_file(&self.path);
+        let buffer = collect_file(&self.path)?;
         debug!("SUCCESS: file set");
         debug!("PROCESS: sending reqwest...");
         let url = format!(
