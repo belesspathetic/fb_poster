@@ -3,7 +3,7 @@ use crate::utils::{collect_file, get_file_size, get_response, Secrets};
 use anyhow::{anyhow, Context, Result};
 use log::{debug, info};
 use reqwest::{header::AUTHORIZATION, multipart, Client};
-use serde_json::json;
+use serde_json::{json, Value};
 
 pub struct Reels {
     pub secrets: Secrets,
@@ -161,7 +161,7 @@ impl Reels {
         Ok(())
     }
 
-    async fn publish(&self, session: &Session) -> Result<()> {
+    async fn publish(&self, session: &Session) -> Result<Value> {
         info!("STEP 4: Publish video");
 
         let endpoint = format!(
@@ -181,22 +181,28 @@ impl Reels {
 
         let resp = session.cl.post(endpoint).multipart(reqbody).send().await?;
 
-        get_response(resp).await?;
+        let val: Value = get_response(resp).await?;
 
-        Ok(())
+        Ok(val)
     }
 
-    pub async fn send(self) -> Result<()> {
+    pub async fn send(self) -> Result<String> {
         let session = self.initial_session().await?;
 
         self.reel_upload(&session).await?;
 
         self.upload_thumbnail(&session).await?;
 
-        self.publish(&session).await?;
+        let publish_json = self.publish(&session).await?;
 
         info!("SUCCESS: Video fully published");
 
-        Ok(())
+        let final_id = publish_json["video_id"]
+            .as_str()
+            .or_else(|| publish_json["id"].as_str())
+            .unwrap_or(&session.video_id)
+            .to_string();
+
+        Ok(final_id)
     }
 }
