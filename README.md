@@ -171,4 +171,5 @@ async fn main() -> Result<()> {
   - [x] Local Reels
   - [x] Hosted Reels
   - [x] With Description
+  - [x] Cross Posting to instagram
 

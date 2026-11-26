@@ -40,6 +40,7 @@ pub fn get_file_size(path: &String) -> Result<u64> {
 pub struct Secrets {
     pub access_token: String,
     pub page_id: String,
+    pub ig_user_id: Option<String>,
 }
 
 impl Secrets {
@@ -47,7 +48,13 @@ impl Secrets {
         Self {
             access_token: access_token.to_string(),
             page_id: page_id.to_string(),
+            ig_user_id: None,
         }
+    }
+
+    pub fn with_ig_user_id(mut self, ig_user_id: &str) -> Self {
+        self.ig_user_id = Some(ig_user_id.to_string());
+        self
     }
 }
 pub fn get_file_name(path: &String) -> String {

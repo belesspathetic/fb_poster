@@ -1,6 +1,6 @@
 [package]
 name = "fb_poster"
-version = "0.1.11"
+version = "0.1.12"
 authors = ["Atrem Zavadskyi haramzayka@gmail.com"]
 edition = "2021"
 
@@ -14,7 +14,7 @@ readme = "README.md"
 
 [dependencies]
 anyhow = "1.0.105"
-reqwest = { version = "0.13.5", features = ["multipart", "json"] }
+reqwest = { version = "0.13.5", features = ["multipart", "json", "query"] }
 serde_json = "1.0.114"
 tokio = { version = "1.54.1", features = ["full"] }
 log = "0.4.35"
